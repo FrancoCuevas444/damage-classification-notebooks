@@ -33,20 +33,20 @@ angulo_pieza = {
     "lado_cond": list(set([piezas[1], piezas[3], piezas[5], piezas[7], piezas[12], piezas[14], piezas[16], piezas[19]])), # sumar paragolpes y capot?? 
     "lado_acomp": list(set([piezas[0], piezas[2], piezas[4], piezas[6], piezas[11], piezas[13], piezas[15], piezas[18]])),
     "frente_cond": list(set([
-        piezas[9], piezas[13], piezas[14], piezas[20], # frente
-        piezas[1], piezas[3], piezas[5], piezas[7], piezas[12], piezas[14], piezas[16], piezas[19] # lado conductor
+        piezas[9], piezas[14], piezas[20], # frente
+        piezas[1], piezas[3], piezas[5], piezas[7], piezas[12], piezas[14], piezas[19] # lado conductor
     ])),
     "frente_acomp": list(set([
-        piezas[9], piezas[13], piezas[14], piezas[20], # frente
-        piezas[0], piezas[2], piezas[4], piezas[6], piezas[11], piezas[13], piezas[15], piezas[18] # lado acompañante
+        piezas[9], piezas[13], piezas[20], # frente
+        piezas[0], piezas[2], piezas[4], piezas[6], piezas[11], piezas[13], piezas[18] # lado acompañante
     ])),
     "atras_cond": list(set([
-        piezas[8], piezas[10], piezas[15], piezas[16], piezas[21], # atras
-        piezas[1], piezas[3], piezas[5], piezas[7], piezas[12], piezas[14], piezas[16], piezas[19] # lado conductor
+        piezas[8], piezas[10], piezas[16], piezas[21], # atras
+        piezas[1], piezas[3], piezas[5], piezas[7], piezas[12], piezas[16], piezas[19] # lado conductor
     ])),
     "atras_acomp": list(set([
-        piezas[8], piezas[10], piezas[15], piezas[16], piezas[21], # atras
-        piezas[0], piezas[2], piezas[4], piezas[6], piezas[11], piezas[13], piezas[15], piezas[18] # lado acompañante
+        piezas[8], piezas[10], piezas[15], piezas[21], # atras
+        piezas[0], piezas[2], piezas[4], piezas[6], piezas[11], piezas[15], piezas[18] # lado acompañante
     ]))
 }
 

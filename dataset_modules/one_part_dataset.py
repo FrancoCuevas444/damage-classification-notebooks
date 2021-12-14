@@ -29,6 +29,7 @@ class OnePartDataset(VisionDataset):
         metadata = common.load_metadata_dataframe(state_file)
         self.metadata = metadata[metadata.apply(is_useful, axis=1)]
         self.complaint_parts = pd.read_csv(complaint_parts)
+        self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "SYC"]
         
         # Load classes
         classes, class_to_idx = one_part_classes(part)
