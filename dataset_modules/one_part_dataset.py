@@ -2,7 +2,7 @@ import pandas as pd
 from torchvision.datasets import VisionDataset
 from PIL import Image
 from torchvision import transforms
-import common
+import dataset_modules.common as common
 import json
     
 def one_part_classes(part):
