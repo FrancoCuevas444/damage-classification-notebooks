@@ -21,7 +21,7 @@ class OnePartDataset(VisionDataset):
             - no tiene la parte
     """
 
-    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None):
+    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None, preload=False, ignore_repair=False, ignore_repair_hours_greater_than=None):
         super(OnePartDataset, self).__init__(root, transform=transform,
                                             target_transform=target_transform)
         
@@ -31,6 +31,12 @@ class OnePartDataset(VisionDataset):
         self.complaint_parts = pd.read_csv(complaint_parts)
         self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "SYC"]
         
+        if ignore_repair:
+            self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "Reparar"]
+        
+        if ignore_repair_hours_greater_than:
+            self.complaint_parts = self.complaint_parts[~((self.complaint_parts["Tarea"] == "Reparar")&(self.complaint_parts["Horas"].astype(float) >= ignore_repair_hours_greater_than))]
+        
         # Load classes
         classes, class_to_idx = one_part_classes(part)
         self.classes = classes
@@ -38,6 +44,10 @@ class OnePartDataset(VisionDataset):
         self.part = part
         self.samples = self.generate_samples()
         self.loader = common.pil_loader
+        self.preload = preload
+        
+        if preload:
+            self.preloaded_samples = [self.load_sample(path, target) for (path, target) in self.samples]
         
         common.print_class_distribution(classes, self.samples)
         
@@ -46,7 +56,13 @@ class OnePartDataset(VisionDataset):
         return len(self.metadata)
 
     def __getitem__(self, index):
+        if self.preload:
+            return self.preloaded_samples[index]
+        
         path, target = self.samples[index]
+        return self.load_sample(path, target)
+    
+    def load_sample(self, path, target):
         sample = self.loader(self.root + path)
         
         if self.transform is not None:
