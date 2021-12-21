@@ -2,7 +2,7 @@ import pandas as pd
 from torchvision.datasets import VisionDataset
 from PIL import Image
 from torchvision import transforms
-import dataset_modules.common as common
+import common
 import json
     
 def one_part_classes(part):
@@ -21,7 +21,7 @@ class OnePartDataset(VisionDataset):
             - no tiene la parte
     """
 
-    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None, preload=False, ignore_repair_hours_greater_than=None):
+    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None, preload=False, ignore_repair=False, ignore_repair_hours_greater_than=None):
         super(OnePartDataset, self).__init__(root, transform=transform,
                                             target_transform=target_transform)
         
@@ -30,6 +30,10 @@ class OnePartDataset(VisionDataset):
         self.metadata = metadata[metadata.apply(is_useful, axis=1)]
         self.complaint_parts = pd.read_csv(complaint_parts)
         self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "SYC"]
+        
+        if ignore_repair:
+            self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "Reparar"]
+        
         if ignore_repair_hours_greater_than:
             self.complaint_parts = self.complaint_parts[~((self.complaint_parts["Tarea"] == "Reparar")&(self.complaint_parts["Horas"].astype(float) >= ignore_repair_hours_greater_than))]
         
