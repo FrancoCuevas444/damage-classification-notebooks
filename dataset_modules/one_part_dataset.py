@@ -21,7 +21,7 @@ class OnePartDataset(VisionDataset):
             - no tiene la parte
     """
 
-    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None, preload=False, ignore_repair=False, ignore_repair_hours_greater_than=None):
+    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None, preload=False, ignore_repair=False, ignore_repair_hours_greater_than=None, visibility_file=None):
         super(OnePartDataset, self).__init__(root, transform=transform,
                                             target_transform=target_transform)
         
@@ -36,6 +36,11 @@ class OnePartDataset(VisionDataset):
         
         if ignore_repair_hours_greater_than:
             self.complaint_parts = self.complaint_parts[~((self.complaint_parts["Tarea"] == "Reparar")&(self.complaint_parts["Horas"].astype(float) >= ignore_repair_hours_greater_than))]
+        
+        self.visibility = None
+        if visibility_file:
+            self.visibility = pd.read_csv(visibility_file)
+            self.visibility.set_index("img")
         
         # Load classes
         classes, class_to_idx = one_part_classes(part)
@@ -78,9 +83,16 @@ class OnePartDataset(VisionDataset):
     def get_part_category(self, row):
         is_visible = self.part in common.angulo_pieza[row["angle"]]
         is_broken = self.part in self.parts_from_complaint(row["image"].split("/")[0])
-
+        
+        is_damage_not_visible = False
+        try:
+            if self.visibility is not None:
+                is_damage_not_visible = self.visibility.loc[self.visibility["img"] == row["image"]]["visible_damage"].item() == "not_visible"
+        except ValueError:
+            is_damage_not_visible = False
+        
         if is_visible:
-            if is_broken:
+            if is_broken and not is_damage_not_visible:
                 return 0
             else:
                 return 1
