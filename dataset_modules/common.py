@@ -53,7 +53,8 @@ angulo_pieza = {
 def print_class_distribution(classes, samples):
     print("----- CLASS DISTRIBUTION -----")
     classes_distribution = { x: 0 for x in classes }
-    for (_, classn) in samples:
+    for elem in samples:
+        classn = elem[1]
         classes_distribution[classes[classn]] += 1
 
     for elem in sorted(classes_distribution.items(), key=lambda item: item[1], reverse=True):
@@ -64,8 +65,11 @@ def pil_loader(path):
     with open(path, "rb") as f:
         img = Image.open(f)
         return img.convert("RGB")
+
+def is_useful(row):
+    return row["useful"] == "yes" and not(row["angle"] in [None, "other", ""])
     
-def load_metadata_dataframe(state_file):
+def load_metadata_dataframe(state_file, filter_useful=True):
     with open(state_file) as f:
         state = json.load(f)
     
@@ -76,4 +80,23 @@ def load_metadata_dataframe(state_file):
         data_for_dataframe["useful"].append(v["useful"])
         data_for_dataframe["angle"].append(v["photo_angle"])
     
-    return pd.DataFrame(data_for_dataframe)
+    df = pd.DataFrame(data_for_dataframe)
+    
+    if filter_useful:
+        df = df[df.apply(is_useful, axis=1)]
+        
+    return df
+
+def load_complaint_parts(complaint_parts_file, ignore_repair, ignore_repair_hours_greater_than):
+    complaint_parts = pd.read_csv(complaint_parts_file)
+    
+    # filtar "SYC" (sacar y colocar)
+    complaint_parts = complaint_parts[complaint_parts["Tarea"] != "SYC"]
+        
+    if ignore_repair:
+        complaint_parts = complaint_parts[complaint_parts["Tarea"] != "Reparar"]
+
+    if ignore_repair_hours_greater_than:
+        complaint_parts = complaint_parts[~((complaint_parts["Tarea"] == "Reparar")&(complaint_parts["Horas"].astype(float) >= ignore_repair_hours_greater_than))]
+        
+    return complaint_parts
