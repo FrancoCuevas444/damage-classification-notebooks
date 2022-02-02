@@ -10,9 +10,6 @@ def one_part_classes(part):
     class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
     return classes, class_to_idx
 
-def is_useful(row):
-    return row["useful"] == "yes" and not(row["angle"] in [None, "other", ""])
-
 class OnePartDataset(VisionDataset):
     """
         Clase encargada de computar un dataset que incluye tres classes:
@@ -21,29 +18,42 @@ class OnePartDataset(VisionDataset):
             - no tiene la parte
     """
 
-    def __init__(self, part, root='./dataset_modules/imgs/', is_useful=is_useful, state_file="./dataset_modules/state.json", complaint_parts="./preprocessing/piezas_normalizadas.csv", transform=None, target_transform=None, preload=False, ignore_repair=False, ignore_repair_hours_greater_than=None):
-        super(OnePartDataset, self).__init__(root, transform=transform,
+    def __init__(self, 
+                 part, 
+                 root='./dataset_modules/imgs/', 
+                 state_file="./dataset_modules/state.json", 
+                 complaint_parts_file="./preprocessing/piezas_normalizadas.csv", 
+                 transform=None, 
+                 target_transform=None, 
+                 preload=False, 
+                 ignore_repair=False, 
+                 ignore_repair_hours_greater_than=None, 
+                 visibility_file=None
+                ):
+        
+        super(OnePartDataset, self).__init__(root, 
+                                             transform=transform,
                                             target_transform=target_transform)
         
         # Load metadata
-        metadata = common.load_metadata_dataframe(state_file)
-        self.metadata = metadata[metadata.apply(is_useful, axis=1)]
-        self.complaint_parts = pd.read_csv(complaint_parts)
-        self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "SYC"]
+        self.metadata = common.load_metadata_dataframe(state_file, filter_useful=True)
         
-        if ignore_repair:
-            self.complaint_parts = self.complaint_parts[self.complaint_parts["Tarea"] != "Reparar"]
+        # Load complaint parts
+        self.complaint_parts = common.load_complaint_parts(complaint_parts_file, ignore_repair, ignore_repair_hours_greater_than)
         
-        if ignore_repair_hours_greater_than:
-            self.complaint_parts = self.complaint_parts[~((self.complaint_parts["Tarea"] == "Reparar")&(self.complaint_parts["Horas"].astype(float) >= ignore_repair_hours_greater_than))]
+        # Load visibility information if present
+        self.visibility = None
+        if visibility_file:
+            self.visibility = pd.read_csv(visibility_file)
+            self.visibility.set_index("img")
         
         # Load classes
         classes, class_to_idx = one_part_classes(part)
         self.classes = classes
         self.class_to_idx = class_to_idx
+        
         self.part = part
         self.samples = self.generate_samples()
-        self.loader = common.pil_loader
         self.preload = preload
         
         if preload:
@@ -63,7 +73,7 @@ class OnePartDataset(VisionDataset):
         return self.load_sample(path, target)
     
     def load_sample(self, path, target):
-        sample = self.loader(self.root + path)
+        sample = common.pil_loader(self.root + path)
         
         if self.transform is not None:
             sample = self.transform(sample)
@@ -78,9 +88,16 @@ class OnePartDataset(VisionDataset):
     def get_part_category(self, row):
         is_visible = self.part in common.angulo_pieza[row["angle"]]
         is_broken = self.part in self.parts_from_complaint(row["image"].split("/")[0])
-
+        
+        is_damage_not_visible = False
+        try:
+            if self.visibility is not None:
+                is_damage_not_visible = self.visibility.loc[self.visibility["img"] == row["image"]]["visible_damage"].item() == "not_visible"
+        except ValueError:
+            is_damage_not_visible = False
+        
         if is_visible:
-            if is_broken:
+            if is_broken and not is_damage_not_visible:
                 return 0
             else:
                 return 1

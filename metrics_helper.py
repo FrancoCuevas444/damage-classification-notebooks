@@ -7,11 +7,10 @@ def init_metrics(device, num_classes):
         'macro_acc': Accuracy(num_classes=num_classes, average='macro'),
         'macro_prec': Precision(num_classes=num_classes, average='macro'),
         'macro_rec': Recall(num_classes=num_classes, average='macro'),
-        'macro_f1': Recall(num_classes=num_classes, average='macro'),
-        'acc': Accuracy(num_classes=num_classes, average='none'),
+        'macro_f1': F1(num_classes=num_classes, average='macro'),
         'prec': Precision(num_classes=num_classes, average='none'),
         'rec': Recall(num_classes=num_classes, average='none'),
-        'f1': Recall(num_classes=num_classes, average='none'),
+        'f1': F1(num_classes=num_classes, average='none'),
         'confusion_matrix': ConfusionMatrix(num_classes=num_classes)
     }).to(device)
 
@@ -49,10 +48,9 @@ def generate_macro_metrics(metric_computed, loss, should_print=True):
     return macro_metrics
 
 def generate_per_class_dataframe(metric_computed, classes):
-    metric_table = {"class": [], "accuracy":[], "precision": [], "recall": [], "f1": []}
+    metric_table = {"class": [], "precision": [], "recall": [], "f1": []}
     for (i, class_name) in enumerate(classes):
         metric_table["class"].append(class_name)
-        metric_table["accuracy"].append(metric_computed["acc"][i].item())
         metric_table["precision"].append(metric_computed["prec"][i].item())
         metric_table["recall"].append(metric_computed["rec"][i].item())
         metric_table["f1"].append(metric_computed["f1"][i].item())
@@ -66,10 +64,10 @@ def generate_per_class_metrics(metric_computed, classes, should_print=True):
     return per_class_metrics
     
 def record_macro_metrics(writer, phase, epoch, metric_computed, epoch_loss):
-    writer.add_scalar('{}/Loss'.format(phase), epoch_loss, epoch)
-    writer.add_scalar('{}/MicroAccuracy'.format(phase), metric_computed["micro_acc"], epoch)
-    writer.add_scalar('{}/Accuracy'.format(phase), metric_computed["macro_acc"], epoch)
-    writer.add_scalar('{}/Precision'.format(phase), metric_computed["macro_prec"], epoch)
-    writer.add_scalar('{}/Recall'.format(phase), metric_computed["macro_rec"], epoch)
-    writer.add_scalar('{}/F1'.format(phase), metric_computed["macro_f1"], epoch)
+    writer.add_scalar('Metrics/Loss/{}'.format(phase), epoch_loss, epoch)
+    writer.add_scalar('Metrics/MicroAccuracy/{}'.format(phase), metric_computed["micro_acc"], epoch)
+    writer.add_scalar('Metrics/Accuracy/{}'.format(phase), metric_computed["macro_acc"], epoch)
+    writer.add_scalar('Metrics/Precision/{}'.format(phase), metric_computed["macro_prec"], epoch)
+    writer.add_scalar('Metrics/Recall/{}'.format(phase), metric_computed["macro_rec"], epoch)
+    writer.add_scalar('Metrics/F1/{}'.format(phase), metric_computed["macro_f1"], epoch)
     writer.flush()
