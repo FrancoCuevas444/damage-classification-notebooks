@@ -61,7 +61,20 @@ class EarlyStopping(object):
                 self.is_better = lambda a, best: a > best + (
                             best * min_delta / 100)
 
-def train_model(model, criterion, optimizer, dataloaders, dataset_sizes, device, writer, num_classes, csv_folder, main_metric="micro_acc", num_epochs=10, patience=5):
+def train_model(
+    model, 
+    criterion, 
+    optimizer, 
+    dataloaders, 
+    dataset_sizes, 
+    device, 
+    writer, 
+    num_classes, 
+    csv_folder,
+    class_weights=None,
+    main_metric="micro_acc", 
+    num_epochs=10, 
+    patience=5):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -103,7 +116,7 @@ def train_model(model, criterion, optimizer, dataloaders, dataset_sizes, device,
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
-                    loss = criterion(outputs, labels)
+                    loss = criterion(outputs, labels, weight=class_weights)
                     metrics(outputs, labels)
 
                     # backward + optimize only if in training phase
