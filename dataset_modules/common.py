@@ -42,11 +42,11 @@ angulo_pieza = {
     ])),
     "atras_cond": list(set([
         piezas[8], piezas[10], piezas[16], piezas[21], # atras
-        piezas[1], piezas[3], piezas[5], piezas[7], piezas[12], piezas[16], piezas[19] # lado conductor
+        piezas[3], piezas[5], piezas[7], piezas[12], piezas[16], piezas[19] # lado conductor
     ])),
     "atras_acomp": list(set([
         piezas[8], piezas[10], piezas[15], piezas[21], # atras
-        piezas[0], piezas[2], piezas[4], piezas[6], piezas[11], piezas[15], piezas[18] # lado acompañante
+        piezas[2], piezas[4], piezas[6], piezas[11], piezas[15], piezas[18] # lado acompañante
     ]))
 }
 

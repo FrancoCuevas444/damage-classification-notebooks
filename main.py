@@ -20,6 +20,8 @@ import metrics_helper
 
 import dataset_modules.image_preloader as image_preloader
 import evaluation.evaluation_helper as eh
+import random
+import numpy as np
 
 def train_one_part_model(
     part, 
@@ -35,7 +37,12 @@ def train_one_part_model(
     remove_repair=False,
     remove_not_visible=False,
     class_weights=None,
-    visibility_file=None):
+    visibility_file=None,
+    i_patience=5):
+    
+    torch.manual_seed(random_state)
+    random.seed(random_state)
+    np.random.seed(random_state)
     
     os.makedirs("./trained_models/{}/{}/".format(model_name, experiment_name), exist_ok=True)
     
@@ -126,7 +133,7 @@ def train_one_part_model(
         class_weights=class_weights,
         main_metric='macro_f1', 
         num_epochs=num_epochs,
-        patience=5
+        patience=i_patience
     )
     
     best_model_path = './trained_models/{}/{}/best_model.pth'.format(model_name, experiment_name)
