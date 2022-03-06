@@ -4,6 +4,7 @@ from PIL import Image
 from torchvision import transforms
 import dataset_modules.common as common
 import json
+import random
     
 def one_part_classes(part, remove_not_visible):
     class_suffixes = ["{}_roto", "{}_sano", "no_{}"]
@@ -28,8 +29,9 @@ class PreloadedOnePartDataset():
                  state_file="./dataset_modules/state.json", 
                  complaint_parts_file="./preprocessing/piezas_normalizadas.csv", 
                  transform=None,
-                 data_augmentation=None,
                  remove_not_visible=False,
+                 offline_augmentation=0,
+                 data_augmentation=None,
                  class_to_augment=None,
                  target_transform=None, 
                  ignore_repair=False,
@@ -60,6 +62,7 @@ class PreloadedOnePartDataset():
         self.class_to_idx = class_to_idx
         
         self.transform = transform
+        self.offline_augmentation = offline_augmentation
         self.data_augmentation = data_augmentation
         self.class_to_augment = class_to_augment
         self.target_transform = target_transform
@@ -79,7 +82,11 @@ class PreloadedOnePartDataset():
         return (transformed_image_data, transformed_label, path)
     
     def generate_samples(self, remove_not_visible):
-        return self.metadata.apply(lambda x: self.generate_sample(x, remove_not_visible), axis=1).dropna().tolist()
+        samples = self.metadata.apply(lambda x: self.generate_sample(x, remove_not_visible), axis=1).dropna().tolist()
+        if self.offline_augmentation > 0 and self.data_augmentation is not None:
+            samples = self.augment_n(samples, self.offline_augmentation)
+        
+        return samples
     
     def generate_sample(self, row, remove_not_visible):
         is_visible = self.part in common.angulo_pieza[row["angle"]]
@@ -91,9 +98,20 @@ class PreloadedOnePartDataset():
         label = self.get_part_category(row)
         return (image_data, label, path)
     
+    def augment_n(self, samples, n):
+        samples_to_augment = random.sample(samples, n)
+        if self.class_to_augment is not None:
+            samples_to_augment = random.sample([s for s in samples if s[1] == self.class_to_augment], n)
+        
+        for (image_data, label, path) in samples_to_augment:
+            augmented_image_data = self.data_augmentation(image_data)
+            samples.append((augmented_image_data, label, path))
+        
+        return samples
+    
     def transform_img(self, img, label):
         transformed_img = img
-        if (self.data_augmentation is not None) and (self.class_to_augment is None or self.class_to_augment == label):
+        if (self.offline_augmentation == 0) and (self.data_augmentation is not None) and (self.class_to_augment is None or self.class_to_augment == label):
             transformed_img = self.data_augmentation(img)
         
         if self.transform is not None:
