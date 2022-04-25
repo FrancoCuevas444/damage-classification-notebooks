@@ -87,11 +87,12 @@ def load_metadata_dataframe(state_file, filter_useful=True):
         
     return df
 
-def load_complaint_parts(complaint_parts_file, ignore_repair, ignore_repair_hours_greater_than):
+def load_complaint_parts(complaint_parts_file, ignore_repair, ignore_repair_hours_greater_than, ignore_syc=True):
     complaint_parts = pd.read_csv(complaint_parts_file)
     
     # filtar "SYC" (sacar y colocar)
-    complaint_parts = complaint_parts[complaint_parts["Tarea"] != "SYC"]
+    if ignore_syc:
+        complaint_parts = complaint_parts[complaint_parts["Tarea"] != "SYC"]
         
     if ignore_repair:
         complaint_parts = complaint_parts[complaint_parts["Tarea"] != "Reparar"]
