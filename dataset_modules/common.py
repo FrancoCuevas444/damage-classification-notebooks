@@ -73,12 +73,13 @@ def load_metadata_dataframe(state_file, filter_useful=True):
     with open(state_file) as f:
         state = json.load(f)
     
-    data_for_dataframe = {"image": [], "useful": [], "angle": []}
+    data_for_dataframe = {"image": [], "useful": [], "angle": [], "selected_parts": []}
 
     for (k,v) in state.items():
         data_for_dataframe["image"].append(k)
         data_for_dataframe["useful"].append(v["useful"])
         data_for_dataframe["angle"].append(v["photo_angle"])
+        data_for_dataframe["selected_parts"].append(v["selected_parts"])
     
     df = pd.DataFrame(data_for_dataframe)
     
@@ -101,3 +102,6 @@ def load_complaint_parts(complaint_parts_file, ignore_repair, ignore_repair_hour
         complaint_parts = complaint_parts[~((complaint_parts["Tarea"] == "Reparar")&(complaint_parts["Horas"].astype(float) >= ignore_repair_hours_greater_than))]
         
     return complaint_parts
+
+def part_code(part_text):
+    return part_text.lower().replace(" ", "_")

@@ -37,7 +37,8 @@ class PreloadedOnePartDataset():
                  ignore_repair=False,
                  remove_repair=False,
                  ignore_repair_hours_greater_than=None, 
-                 visibility_file=None
+                 visibility_file=None,
+                 use_selected_parts=False
                 ):
         
         self.part = part
@@ -67,6 +68,7 @@ class PreloadedOnePartDataset():
         self.class_to_augment = class_to_augment
         self.target_transform = target_transform
         self.preloaded_images = preloaded_images
+        self.use_selected_parts = use_selected_parts
         self.samples = self.generate_samples(remove_not_visible)
         
         common.print_class_distribution(classes, self.samples)
@@ -138,15 +140,21 @@ class PreloadedOnePartDataset():
         is_visible = self.part in common.angulo_pieza[row["angle"]]
         is_broken = self.part in self.parts_from_complaint(row["image"].split("/")[0])
         
-        is_damage_not_visible = False
-        try:
-            if self.visibility is not None:
-                is_damage_not_visible = self.visibility.loc[self.visibility["img"] == row["image"]]["visible_damage"].item() == "not_visible"
-        except ValueError:
-            is_damage_not_visible = False
+        if self.use_selected_parts:
+            part_code = common.part_code(self.part)
+            is_damage_visible = part_code in row["selected_parts"]
+            is_broken = is_broken and is_damage_visible
+        
+        # OLD VISIBILITY CODE
+        #is_damage_not_visible = False
+        #try:
+        #    if self.visibility is not None:
+        #        is_damage_not_visible = self.visibility.loc[self.visibility["img"] == row["image"]]["visible_damage"].item() == "not_visible"
+        #except ValueError:
+        #    is_damage_not_visible = False
         
         if is_visible:
-            if is_broken and not is_damage_not_visible:
+            if is_broken:
                 return 0
             else:
                 return 1
