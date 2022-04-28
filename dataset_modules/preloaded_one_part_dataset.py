@@ -91,7 +91,7 @@ class PreloadedOnePartDataset():
         return samples
     
     def generate_sample(self, row, remove_not_visible):
-        is_visible = self.part in common.angulo_pieza[row["angle"]]
+        is_visible = any(item.startswith(self.part) for item in common.angulo_pieza[row["angle"]])
         if remove_not_visible and not is_visible:
             return
             
@@ -137,12 +137,13 @@ class PreloadedOnePartDataset():
         self.metadata = self.metadata[(~(self.metadata["angle"].isin(["frente", "frente_cond","frente_acomp"])))|(~(i2.isin(i1)))]
     
     def get_part_category(self, row):
-        is_visible = self.part in common.angulo_pieza[row["angle"]]
-        is_broken = self.part in self.parts_from_complaint(row["image"].split("/")[0])
-        
+        visible_parts = list(filter(lambda item: item.startswith(self.part), common.angulo_pieza[row["angle"]]))
+        is_visible = len(visible_parts) > 0
+
+        is_broken = any((part in self.parts_from_complaint(row["image"].split("/")[0])) for part in visible_parts)
+
         if self.use_selected_parts:
-            part_code = common.part_code(self.part)
-            is_damage_visible = part_code in row["selected_parts"]
+            is_damage_visible = any((common.part_code(part) in row["selected_parts"]) for part in visible_parts)
             is_broken = is_broken and is_damage_visible
         
         # OLD VISIBILITY CODE
