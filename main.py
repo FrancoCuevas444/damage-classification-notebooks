@@ -38,7 +38,8 @@ def train_one_part_model(
     visibility_file=None,
     data_augmentation=transforms.Compose([]),
     class_to_augment=None,
-    offline_augmentation=0):
+    offline_augmentation=0,
+    use_selected_parts=False):
     
     os.makedirs("./trained_models/{}/{}/".format(model_name, experiment_name), exist_ok=True)
     
@@ -52,7 +53,8 @@ def train_one_part_model(
                  random_state,
                  data_augmentation,
                  class_to_augment,
-                 offline_augmentation)
+                 offline_augmentation,
+                 use_selected_parts)
 
     print("#TRAIN {} #TEST {}".format(dataset_sizes["train"], dataset_sizes["test"]))
     
@@ -116,7 +118,7 @@ def train_one_part_model(
         class_weights=class_weights,
         main_metric='macro_f1', 
         num_epochs=num_epochs,
-        patience=5
+        patience=20
     )
     
     best_model_path = './trained_models/{}/{}/best_model.pth'.format(model_name, experiment_name)
@@ -137,7 +139,8 @@ def load_dataset(part,
                  random_state=42,
                  data_augmentation=transforms.Compose([]),
                  class_to_augment=None,
-                 offline_augmentation=0):
+                 offline_augmentation=0,
+                 use_selected_parts=False):
     
     print("LOAD TRAIN")
     train_dataset = opd.PreloadedOnePartDataset(
@@ -153,7 +156,8 @@ def load_dataset(part,
         ignore_repair=ignore_repair,
         remove_not_visible=remove_not_visible,
         visibility_file=visibility_file,
-        offline_augmentation=offline_augmentation
+        offline_augmentation=offline_augmentation,
+        use_selected_parts=use_selected_parts
     )
     
     print("LOAD TEST")
@@ -167,7 +171,8 @@ def load_dataset(part,
         state_file="./dataset_modules/state-test.json",
         ignore_repair=ignore_repair,
         remove_not_visible=remove_not_visible,
-        visibility_file=visibility_file
+        visibility_file=visibility_file,
+        use_selected_parts=use_selected_parts
     )
 
     train_size = len(train_dataset)
