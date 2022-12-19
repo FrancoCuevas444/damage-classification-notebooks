@@ -77,14 +77,14 @@ def train_one_part_model(
         'test': test_loader
     }
     
-    model = models.resnet50(pretrained=True)
+    model = models.vgg16(pretrained=True)
     NUM_CLASSES = len(classes)
 
     if feature_extraction:
         for param in model.parameters():
             param.requires_grad = False
 
-    model.fc = torch.nn.Linear(2048, NUM_CLASSES)
+    model.classifier[6] = torch.nn.Linear(4096, NUM_CLASSES)
     model = model.to(device)
 
     # Tensorboard metrics writer
@@ -118,7 +118,7 @@ def train_one_part_model(
         class_weights=class_weights,
         main_metric='macro_f1', 
         num_epochs=num_epochs,
-        patience=20
+        patience=6
     )
     
     best_model_path = './trained_models/{}/{}/best_model.pth'.format(model_name, experiment_name)
